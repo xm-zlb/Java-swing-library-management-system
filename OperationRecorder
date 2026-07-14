@@ -1,0 +1,3 @@
+interface OperationRecorder {
+    void recordOperation(String operation, String detail, String result);
+}
