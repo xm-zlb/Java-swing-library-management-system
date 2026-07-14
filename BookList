@@ -1,0 +1,101 @@
+class BookList{
+    private HashMap<String,Book> bookList;
+    private ArrayList<String> index;
+    private ArrayList<String> borrowBooks;
+    public BookList(){
+        this.bookList= new HashMap<>();
+        this.index=new ArrayList<>();
+        this.borrowBooks=new ArrayList<>();
+    }
+    public HashMap<String, Book> getBookList() {
+        return bookList;
+    }
+    public void bookFactory(String fileName)throws IOException{
+        try(BufferedReader read=new BufferedReader(new FileReader(fileName))){
+            String line;
+            while((line=read.readLine())!=null){
+                String[] tokens=line.split("\\|");
+                if(tokens.length==4) {
+                    String bookName=tokens[0];
+                    String author=tokens[1];
+                    Double price=Double.parseDouble(tokens[2]);
+                    String type=tokens[3];
+                    bookList.put(bookName,new Book(bookName,author,price,type));
+                    index.add(bookName);
+                }
+                else{
+                    String bookName=tokens[0];
+                    String author=tokens[1];
+                    Double price=Double.parseDouble(tokens[2]);
+                    String type=tokens[3];
+                    String borrowDate=tokens[4];
+                    String dueDate=tokens[5];
+                    Book borrowedBook=new Book(bookName,author,price,type);
+                    borrowedBook.setCondition("已借出");
+                    borrowedBook.setBorrowDate(LocalDate.parse(borrowDate));
+                    borrowedBook.setDueDate(LocalDate.parse(dueDate));
+                    bookList.put(bookName,borrowedBook);
+                    index.add(bookName);
+                }
+            }
+        }
+    }
+    public void saveFile(String fileName)throws IOException{
+        try (PrintWriter writer = new PrintWriter(new FileWriter(fileName))) {
+            for (String name : index) {
+                Book book = bookList.get(name);
+                String borrowDateStr = book.getBorrowDate()!=null?book.getBorrowDate().toString():"";
+                String dueDateStr = book.getDueDate()!=null?book.getDueDate().toString():"";
+                writer.printf("%s|%s|%.2f|%s|%s|%s\n", book.getName(), book.getAuthor(), book.getPrice(), book.getType(), borrowDateStr, dueDateStr);
+            }
+        }
+    }
+    public ArrayList<String> getIndex(){
+        return index;
+    }
+    public ArrayList<String> getBorrowBooks() {
+        return borrowBooks;
+    }
+    public boolean searchBook(String e){
+        return bookList.containsKey(e);
+    }
+    public void addBook(Book e){
+        bookList.put(e.getName(),e);
+        index.add(e.getName());
+    }
+    public boolean deleteBook(String e){
+        if(bookList.containsKey(e)){
+            bookList.remove(e);
+            index.remove(e);
+            return true;
+        }
+        else return false;
+    }
+    public boolean borrowBook(String e){
+        if(!searchBook(e)) return false;
+        if(bookList.get(e).getCondition().equals("未借出")){
+            bookList.get(e).setCondition("已借出");
+            bookList.get(e).setTime();
+            borrowBooks.add(e);
+            return true;
+        }
+        else return false;
+    }
+    public boolean returnBook(String e){
+        if(bookList.get(e).getCondition().equals("已借出")){
+            bookList.get(e).setCondition("未借出");
+            borrowBooks.remove(e);
+            return true;
+        }
+        else return false;
+    }
+    public String refreshBookSelf(){
+        int i=1;
+        StringBuilder texts = new StringBuilder();
+        for(String s:index){
+            texts.append(i).append(".").append(bookList.get(s).toString()).append("\n");
+            i++;
+        }
+        return texts.toString();
+    }
+}
